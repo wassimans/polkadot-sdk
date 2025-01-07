@@ -115,7 +115,11 @@ async fn build_interface(
 	};
 	task_manager.add_child(collator_node.task_manager);
 	Ok((
-		Arc::new(RelayChainRpcInterface::new(client, collator_node.overseer_handle)),
+		Arc::new(RelayChainRpcInterface::new(
+			client,
+			collator_node.overseer_handle,
+			collator_node.network_service,
+		)),
 		Some(collator_pair),
 	))
 }
@@ -244,7 +248,7 @@ async fn new_minimal_relay_chain<Block: BlockT, Network: NetworkBackend<RelayBlo
 
 	let overseer_args = OverseerGenArgs {
 		runtime_client: relay_chain_rpc_client.clone(),
-		network_service: network,
+		network_service: network.clone(),
 		sync_service,
 		authority_discovery_service,
 		collation_req_v1_receiver,
@@ -262,7 +266,7 @@ async fn new_minimal_relay_chain<Block: BlockT, Network: NetworkBackend<RelayBlo
 	let overseer_handle =
 		collator_overseer::spawn_overseer(overseer_args, &task_manager, relay_chain_rpc_client)?;
 
-	Ok(NewMinimalNode { task_manager, overseer_handle })
+	Ok(NewMinimalNode { task_manager, overseer_handle, network_service: network })
 }
 
 fn build_request_response_protocol_receivers<
